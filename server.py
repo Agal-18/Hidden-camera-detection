@@ -3,12 +3,20 @@ import tensorflow as tf
 import numpy as np
 import cv2
 import base64
+import os
+import gdown
 
 # Create Flask app
 app = Flask(__name__)
 
 # Load trained model
-model = tf.keras.models.load_model("spycam_cnn_final.h5")
+model_path = "spycam_cnn_final.h5"
+
+if not os.path.exists(model_path):
+    url = "https://drive.google.com/uc?id=1ijGOH5gTxnRLSmBbcUx1RsDh_uEjleBZ"
+    gdown.download(url, model_path, quiet=False)
+
+model = tf.keras.models.load_model(model_path)
 
 
 # ---------- PAGES ----------
