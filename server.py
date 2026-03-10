@@ -8,33 +8,30 @@ import gdown
 
 app = Flask(__name__)
 
-# ---------------- MODEL LOADING ----------------
+# -------- FIX OLD KERAS MODEL ISSUE --------
+from keras.layers import InputLayer
+original_init = InputLayer.__init__
 
-model = None
+def patched_init(self, *args, **kwargs):
+    if "batch_shape" in kwargs:
+        kwargs["batch_input_shape"] = kwargs.pop("batch_shape")
+    original_init(self, *args, **kwargs)
+
+InputLayer.__init__ = patched_init
+# -------------------------------------------
+
+# -------- MODEL DOWNLOAD --------
 model_path = "spycam_cnn_final.h5"
 
-def load_cnn_model():
-    global model
+if not os.path.exists(model_path):
+    url = "https://drive.google.com/uc?id=1ijGOH5gTxnRLSmBbcUx1RsDh_uEjleBZ"
+    gdown.download(url, model_path, quiet=False)
 
-    # download model if not present
-    if not os.path.exists(model_path):
-        url = "https://drive.google.com/uc?id=1ijGOH5gTxnRLSmBbcUx1RsDh_uEjleBZ"
-        gdown.download(url, model_path, quiet=False)
+# -------- LOAD MODEL --------
+from keras.models import load_model
+model = load_model(model_path, compile=False)
 
-    # load model safely
-    try:
-        from keras.models import load_model
-        model = load_model(model_path, compile=False)
-        print("Model loaded successfully")
-
-    except Exception as e:
-        print("Model loading failed:", e)
-
-# load model at startup
-load_cnn_model()
-
-# ---------------- PAGES ----------------
-
+# -------- PAGES --------
 @app.route("/")
 def home():
     return render_template("login.html")
@@ -55,28 +52,22 @@ def about():
 def detect_page():
     return render_template("index.html")
 
-# ---------------- DETECTION ----------------
-
+# -------- DETECTION --------
 @app.route("/detect", methods=["POST"])
 def detect():
-
     try:
         data = request.json["image"]
-
         img_data = data.split(",")[1]
         img_bytes = base64.b64decode(img_data)
 
         npimg = np.frombuffer(img_bytes, np.uint8)
-
         frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
         frame = cv2.resize(frame, (224,224))
-
         frame = frame.astype("float32") / 255.0
         frame = np.expand_dims(frame, axis=0)
 
         prediction = model.predict(frame)
-
         score = float(prediction[0][0])
 
         if score > 0.5:
@@ -90,7 +81,6 @@ def detect():
         print("Detection Error:", e)
         return jsonify({"result": "Detection Error"})
 
-# ---------------- RUN SERVER ----------------
-
+# -------- RUN SERVER --------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
