@@ -16,7 +16,7 @@ if not os.path.exists(model_path):
     url = "https://drive.google.com/uc?id=1ijGOH5gTxnRLSmBbcUx1RsDh_uEjleBZ"
     gdown.download(url, model_path, quiet=False)
 
-model = tf.keras.models.load_model(model_path)
+model = tf.keras.models.load_model(model_path, compile=False)
 
 
 # ---------- PAGES ----------
