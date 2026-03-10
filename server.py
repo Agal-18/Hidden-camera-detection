@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from keras.models import load_model
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -16,7 +17,8 @@ if not os.path.exists(model_path):
     url = "https://drive.google.com/uc?id=1ijGOH5gTxnRLSmBbcUx1RsDh_uEjleBZ"
     gdown.download(url, model_path, quiet=False)
 
-model = tf.keras.models.load_model(model_path, compile=False)
+
+model = load_model(model_path, compile=False)
 
 
 # ---------- PAGES ----------
