@@ -60,19 +60,24 @@ def detect_page():
 @app.route("/detect", methods=["POST"])
 def detect():
     try:
+
         data = request.json["image"]
 
         img_data = data.split(",")[1]
+
         img_bytes = base64.b64decode(img_data)
 
         npimg = np.frombuffer(img_bytes, np.uint8)
+
         frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
         frame = cv2.resize(frame,(224,224))
+
         frame = frame.astype("float32") / 255.0
+
         frame = np.expand_dims(frame, axis=0)
 
-        prediction = model.predict(frame)
+        prediction = model(frame, training=False)
 
         score = float(prediction[0][0])
 
